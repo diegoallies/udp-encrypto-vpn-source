@@ -45,9 +45,3 @@ Use the public hostname and port assigned by Playit in the compatible client.
 ```bash
 sudo ./encrypto-uninstall.sh
 ```
-
-## Trust boundary
-
-Encrypto VPN currently uses a precompiled third-party ZIVPN engine. This repository pins the SHA-256 digest of the inspected release asset, but does not provide or independently audit its source code.
-
-Derived from [zahidbd2/udp-zivpn](https://github.com/zahidbd2/udp-zivpn). ZIVPN client: [Google Play](https://play.google.com/store/apps/details?id=com.zi.zivpn).
