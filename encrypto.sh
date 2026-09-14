@@ -227,5 +227,6 @@ show_playit_step 7 'Public Endpoint: keep Free Network selected, then click Next
 show_playit_step 8 'Assign to Agent: select the agent created when you approved the Playit claim. Its name may begin with from-key-. You can rename it later.'
 show_playit_step 9 'Origin Config: Local IP = 127.0.0.1, Local Port = 5667, Proxy Protocol = None. Then click Next.'
 show_playit_step 10 'Review every value, then click Create Tunnel.'
+show_playit_step 11 'Wait for Allocating address to finish. Do not change the origin settings. Copy the public hostname and UDP port when they appear.'
 echo
-echo "[done] Complete the final browser action and copy the public endpoint Playit assigns."
+echo "[done] Use Playit's public hostname and UDP port in the compatible VPN client."

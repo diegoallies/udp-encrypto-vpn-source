@@ -48,7 +48,7 @@ The installer runs `playit setup`. Open the claim URL it prints and approve the 
 
 The installer walks through the Playit form one answer at a time and waits for Enter between browser steps.
 Playit's usage-confirmation sentence must be typed manually because that field blocks pasting.
-The guide covers the complete flow through Free Network selection, agent assignment, origin configuration, review, and tunnel creation.
+The guide covers the complete flow through Free Network selection, agent assignment, origin configuration, review, tunnel creation, and public-address allocation.
 
 Use the public hostname and port assigned by Playit in the compatible client.
 
