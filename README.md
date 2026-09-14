@@ -47,6 +47,7 @@ The installer runs `playit setup`. Open the claim URL it prints and approve the 
 ```
 
 The installer walks through the Playit form one answer at a time and waits for Enter between browser steps.
+Playit's usage-confirmation sentence must be typed manually because that field blocks pasting.
 
 Use the public hostname and port assigned by Playit in the compatible client.
 
