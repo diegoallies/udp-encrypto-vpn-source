@@ -11,7 +11,7 @@ Encrypto VPN client -> Playit UDP endpoint -> 127.0.0.1:5667 on Linux -> Encrypt
 The installer:
 
 - supports x86_64 Linux;
-- verifies the pinned upstream ZIVPN 1.4.9 engine checksum;
+- verifies the pinned upstream server engine checksum;
 - requires a strong password;
 - binds Encrypto VPN to localhost for Playit forwarding;
 - runs the service as a restricted system user;
