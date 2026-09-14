@@ -10,7 +10,7 @@ if [[ ${EUID} -ne 0 ]]; then
   exit 1
 fi
 
-for command in cmp curl install mktemp openssl sha256sum sysctl systemctl useradd; do
+for command in cmp curl install mktemp openssl python3 sed sha256sum sleep sysctl systemctl useradd; do
   if ! command -v "${command}" >/dev/null 2>&1; then
     echo "Missing required command: ${command}" >&2
     exit 1
@@ -196,6 +196,38 @@ else
   playit setup
 fi
 
+playit_secret=$(sed -n 's/^[[:space:]]*secret_key[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' /etc/playit/playit.toml)
+
+if [[ -z ${playit_secret} ]]; then
+  echo "Could not read the Playit agent key, so public-address polling is unavailable." >&2
+  exit 1
+fi
+
+get_playit_endpoint() {
+  local rundata_response
+
+  rundata_response=$(printf 'header = "Authorization: Agent-Key %s"\n' "${playit_secret}" \
+    | curl --config - --silent --show-error \
+      --header 'Content-Type: application/json' \
+      --request POST \
+      --data '{}' \
+      https://api.playit.gg/v1/agents/rundata) || return 1
+  python3 -c 'import json, sys
+try:
+    response = json.load(sys.stdin)
+    tunnels = response.get("data", {}).get("tunnels", [])
+    print(next((t.get("display_address", "") for t in tunnels if t.get("name") == "Encrypto VPN"), ""))
+except (ValueError, AttributeError):
+    print("")' <<<"${rundata_response}"
+}
+
+public_endpoint=$(get_playit_endpoint || true)
+
+if [[ -n ${public_endpoint} ]]; then
+  echo "[ready] Encrypto VPN public endpoint: ${public_endpoint}"
+  exit 0
+fi
+
 echo "[ready] Encrypto VPN is listening locally on UDP 127.0.0.1:5667."
 echo "Open the Playit account link below, then create a Custom UDP tunnel to 127.0.0.1:5667."
 if ! playit account login-url; then
@@ -227,6 +259,21 @@ show_playit_step 7 'Public Endpoint: keep Free Network selected, then click Next
 show_playit_step 8 'Assign to Agent: select the agent created when you approved the Playit claim. Its name may begin with from-key-. You can rename it later.'
 show_playit_step 9 'Origin Config: Local IP = 127.0.0.1, Local Port = 5667, Proxy Protocol = None. Then click Next.'
 show_playit_step 10 'Review every value, then click Create Tunnel.'
-show_playit_step 11 'Wait for Allocating address to finish. Do not change the origin settings. Copy the public hostname and UDP port when they appear.'
+
 echo
-echo "[done] Use Playit's public hostname and UDP port in the compatible VPN client."
+echo "Waiting for Playit to allocate the public address. Checking every 5 seconds..."
+
+for _ in {1..120}; do
+  public_endpoint=$(get_playit_endpoint || true)
+
+  if [[ -n ${public_endpoint} ]]; then
+    echo "[ready] Encrypto VPN public endpoint: ${public_endpoint}"
+    exit 0
+  fi
+
+  sleep 5
+done
+
+echo
+echo "Playit did not allocate an address within 10 minutes. Check https://playit.gg/account/tunnels"
+exit 1
