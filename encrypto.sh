@@ -201,3 +201,25 @@ echo "Open the Playit account link below, then create a Custom UDP tunnel to 127
 if ! playit account login-url; then
   echo "https://playit.gg/account/tunnels"
 fi
+
+show_playit_step() {
+  local step_number=$1
+  local instruction=$2
+
+  echo
+  echo "Playit step ${step_number}: ${instruction}"
+
+  if [[ -t 0 ]]; then
+    read -r -p "Press Enter after completing this step in the browser... "
+  fi
+}
+
+echo
+echo "Playit asks for tunnel details across several screens."
+echo "The answers will be shown one at a time to avoid confusion."
+show_playit_step 1 'Tunnel name: Encrypto VPN'
+show_playit_step 2 'Tunnel type: UDP'
+show_playit_step 3 'Port count: 1'
+show_playit_step 4 'Acknowledge that Roblox is prohibited, then click Next.'
+show_playit_step 5 'Software description: Self-hosted Encrypto VPN server for accessing my own network'
+show_playit_step 6 'Usage confirmation: I will not use this tunnel for malware, abuse, or prohibited software.'

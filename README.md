@@ -46,6 +46,8 @@ The installer runs `playit setup`. Open the claim URL it prints and approve the 
 127.0.0.1:5667
 ```
 
+The installer walks through the Playit form one answer at a time and waits for Enter between browser steps.
+
 Use the public hostname and port assigned by Playit in the compatible client.
 
 ## Uninstall
