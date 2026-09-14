@@ -1,5 +1,7 @@
 # udp-encrypto-vpn
 
+![Encrypto VPN](encrypto-vpn.png)
+
 A hardened Encrypto VPN UDP server installer for a private Linux host published through a single Playit UDP tunnel.
 
 ```text
