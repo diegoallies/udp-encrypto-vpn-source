@@ -27,6 +27,12 @@ Review the script, then run:
 sudo ./encrypto.sh
 ```
 
+Or download and run it directly:
+
+```bash
+wget -O encrypto.sh https://raw.githubusercontent.com/diegoallies/udp-encrypto-vpn-source/main/encrypto.sh && chmod +x encrypto.sh && sudo ./encrypto.sh
+```
+
 Press Enter to use the default password `masepoes`, or enter a custom password containing at least 16 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, or `-`.
 
 The default password is public and insecure. Use a custom password for any reachable tunnel.
