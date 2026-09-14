@@ -15,7 +15,6 @@ The installer:
 - requires a strong password;
 - binds Encrypto VPN to localhost for Playit forwarding;
 - installs and starts the Playit agent;
-- creates the Playit UDP tunnel automatically after account approval;
 - runs the service as a restricted system user;
 - does not upgrade the operating system; and
 - does not open or redirect a broad UDP port range.
@@ -40,7 +39,7 @@ The default password is public and insecure. Use a custom password for any reach
 
 ## Connect Playit
 
-The installer runs `playit setup`. Open the claim URL it prints and approve the Kali agent in your Playit account. The installer then creates a custom UDP tunnel for this local address and prints the public endpoint:
+The installer runs `playit setup`. Open the claim URL it prints and approve the Kali agent in your Playit account. It then prints an account-login link. Open that link and create a custom UDP tunnel for this local address:
 
 ```text
 127.0.0.1:5667
