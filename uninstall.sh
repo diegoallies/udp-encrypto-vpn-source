@@ -1,29 +1,21 @@
-#!/bin/bash
-# - ZiVPN Remover -
-clear
-echo -e "Uninstalling ZiVPN ..."
-systemctl stop zivpn.service 1> /dev/null 2> /dev/null
-systemctl stop zivpn_backfill.service 1> /dev/null 2> /dev/null
-systemctl disable zivpn.service 1> /dev/null 2> /dev/null
-systemctl disable zivpn_backfill.service 1> /dev/null 2> /dev/null
-rm /etc/systemd/system/zivpn.service 1> /dev/null 2> /dev/null
-rm /etc/systemd/system/zivpn_backfill.service 1> /dev/null 2> /dev/null
-killall zivpn 1> /dev/null 2> /dev/null
-rm -rf /etc/zivpn 1> /dev/null 2> /dev/null
-rm /usr/local/bin/zivpn 1> /dev/null 2> /dev/null
-if pgrep "zivpn" >/dev/null; then
-  echo -e "Server Running"
-else
-  echo -e "Server Stopped"
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo "Run with sudo: sudo ./uninstall.sh" >&2
+  exit 1
 fi
-file="/usr/local/bin/zivpn" 1> /dev/null 2> /dev/null
-if [ -e "$file" ] 1> /dev/null 2> /dev/null; then
-  echo -e "Files still remaining, try again"
-else
-  echo -e "Successfully Removed"
+
+systemctl disable --now zivpn.service 2>/dev/null || true
+rm -f /etc/systemd/system/zivpn.service
+rm -f /etc/sysctl.d/90-zivpn.conf
+rm -f /usr/local/bin/zivpn
+rm -rf /etc/zivpn
+systemctl daemon-reload
+sysctl --system >/dev/null
+
+if id zivpn >/dev/null 2>&1; then
+  userdel zivpn
 fi
-echo "Cleaning Cache & Swap"
-echo 3 > /proc/sys/vm/drop_caches
-sysctl -w vm.drop_caches=3
-swapoff -a && swapon -a
-echo -e "Done."
+
+echo "ZIVPN removed."

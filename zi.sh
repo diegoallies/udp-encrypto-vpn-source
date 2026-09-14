@@ -1,62 +1,110 @@
-#!/bin/bash
-# Zivpn UDP Module installer
-# Creator Zahid Islam
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo -e "Updating server"
-sudo apt-get update && apt-get upgrade -y
-systemctl stop zivpn.service 1> /dev/null 2> /dev/null
-echo -e "Downloading UDP Service"
-wget https://github.com/zahidbd2/udp-zivpn/releases/download/udp-zivpn_1.4.9/udp-zivpn-linux-amd64 -O /usr/local/bin/zivpn 1> /dev/null 2> /dev/null
-chmod +x /usr/local/bin/zivpn
-mkdir /etc/zivpn 1> /dev/null 2> /dev/null
-wget https://raw.githubusercontent.com/zahidbd2/udp-zivpn/main/config.json -O /etc/zivpn/config.json 1> /dev/null 2> /dev/null
+ZIVPN_VERSION="1.4.9"
+ZIVPN_SHA256="df6658c195882ff2f6cefb44050e8cb2c238ceb2b6e3fbefb931698f4f0519cb"
+ZIVPN_URL="https://github.com/zahidbd2/udp-zivpn/releases/download/udp-zivpn_${ZIVPN_VERSION}/udp-zivpn-linux-amd64"
 
-echo "Generating cert files:"
-openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 -subj "/C=US/ST=California/L=Los Angeles/O=Example Corp/OU=IT Department/CN=zivpn" -keyout "/etc/zivpn/zivpn.key" -out "/etc/zivpn/zivpn.crt"
-sysctl -w net.core.rmem_max=16777216 1> /dev/null 2> /dev/null
-sysctl -w net.core.wmem_max=16777216 1> /dev/null 2> /dev/null
-cat <<EOF > /etc/systemd/system/zivpn.service
+if [[ ${EUID} -ne 0 ]]; then
+  echo "Run with sudo: sudo ./zi.sh" >&2
+  exit 1
+fi
+
+for command in curl openssl sha256sum systemctl useradd install; do
+  if ! command -v "${command}" >/dev/null 2>&1; then
+    echo "Missing required command: ${command}" >&2
+    exit 1
+  fi
+done
+
+if [[ $(uname -m) != "x86_64" ]]; then
+  echo "This installer supports x86_64 only." >&2
+  exit 1
+fi
+
+read -r -s -p "ZIVPN password (minimum 16 characters): " zivpn_password
+echo
+
+if [[ ${#zivpn_password} -lt 16 || ! ${zivpn_password} =~ ^[A-Za-z0-9._~-]+$ ]]; then
+  echo "Use at least 16 characters from: A-Z a-z 0-9 . _ ~ -" >&2
+  exit 1
+fi
+
+download_path=$(mktemp)
+trap 'rm -f "${download_path}"' EXIT
+
+curl --fail --location --proto '=https' --tlsv1.2 "${ZIVPN_URL}" --output "${download_path}"
+echo "${ZIVPN_SHA256}  ${download_path}" | sha256sum --check --status
+
+systemctl stop zivpn.service 2>/dev/null || true
+
+if ! id zivpn >/dev/null 2>&1; then
+  useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin zivpn
+fi
+
+install -d -m 0750 -o root -g zivpn /etc/zivpn
+install -m 0755 -o root -g root "${download_path}" /usr/local/bin/zivpn
+
+cat > /etc/zivpn/config.json <<EOF
+{
+  "listen": "127.0.0.1:5667",
+  "cert": "/etc/zivpn/zivpn.crt",
+  "key": "/etc/zivpn/zivpn.key",
+  "obfs": "zivpn",
+  "auth": {
+    "mode": "passwords",
+    "config": ["${zivpn_password}"]
+  }
+}
+EOF
+
+openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+  -subj "/CN=zivpn" \
+  -keyout /etc/zivpn/zivpn.key \
+  -out /etc/zivpn/zivpn.crt
+
+chown root:zivpn /etc/zivpn/config.json /etc/zivpn/zivpn.key /etc/zivpn/zivpn.crt
+chmod 0640 /etc/zivpn/config.json /etc/zivpn/zivpn.key
+chmod 0644 /etc/zivpn/zivpn.crt
+
+cat > /etc/sysctl.d/90-zivpn.conf <<'EOF'
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+EOF
+
+sysctl --system >/dev/null
+
+cat > /etc/systemd/system/zivpn.service <<'EOF'
 [Unit]
-Description=zivpn VPN Server
-After=network.target
+Description=ZIVPN UDP server for local Playit forwarding
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
+User=zivpn
+Group=zivpn
 WorkingDirectory=/etc/zivpn
 ExecStart=/usr/local/bin/zivpn server -c /etc/zivpn/config.json
-Restart=always
+Restart=on-failure
 RestartSec=3
 Environment=ZIVPN_LOG_LEVEL=info
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
 NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadOnlyPaths=/etc/zivpn
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-echo -e "ZIVPN UDP Passwords"
-read -p "Enter passwords separated by commas, example: pass1,pass2 (Press enter for Default 'zi'): " input_config
+systemctl daemon-reload
+systemctl enable --now zivpn.service
+systemctl --no-pager --full status zivpn.service
 
-if [ -n "$input_config" ]; then
-    IFS=',' read -r -a config <<< "$input_config"
-    if [ ${#config[@]} -eq 1 ]; then
-        config+=(${config[0]})
-    fi
-else
-    config=("zi")
-fi
-
-new_config_str="\"config\": [$(printf "\"%s\"," "${config[@]}" | sed 's/,$//')]"
-
-sed -i -E "s/\"config\": ?\[[[:space:]]*\"zi\"[[:space:]]*\]/${new_config_str}/g" /etc/zivpn/config.json
-
-
-systemctl enable zivpn.service
-systemctl start zivpn.service
-iptables -t nat -A PREROUTING -i $(ip -4 route ls|grep default|grep -Po '(?<=dev )(\S+)'|head -1) -p udp --dport 6000:19999 -j DNAT --to-destination :5667
-ufw allow 6000:19999/udp
-ufw allow 5667/udp
-rm zi.* 1> /dev/null 2> /dev/null
-echo -e "ZIVPN UDP Installed"
+echo "ZIVPN is listening locally on UDP 127.0.0.1:5667."
+echo "Create a Playit custom UDP tunnel whose local address is 127.0.0.1:5667."
