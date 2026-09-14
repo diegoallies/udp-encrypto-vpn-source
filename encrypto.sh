@@ -115,12 +115,71 @@ if ! command -v playit >/dev/null 2>&1; then
   echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./" \
     > /etc/apt/sources.list.d/playit-cloud.list
   apt-get update
-  DEBIAN_FRONTEND=noninteractive apt-get install -y playit
+  DEBIAN_FRONTEND=noninteractive apt-get install -y jq playit
+elif ! command -v jq >/dev/null 2>&1; then
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y jq
 fi
 
 systemctl enable --now playit
 
 echo "Encrypto VPN is listening locally on UDP 127.0.0.1:5667."
-echo "Playit will print a claim URL. Open it in your browser and approve this agent."
-playit setup
-echo "Create a Playit custom UDP tunnel pointing to 127.0.0.1:5667."
+
+if [[ ! -s /etc/playit/playit.toml ]]; then
+  echo "Playit will print a claim URL. Open it in your browser and approve this agent."
+  playit setup
+fi
+
+playit_secret=$(sed -n 's/^[[:space:]]*secret_key[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' /etc/playit/playit.toml)
+
+if [[ -z ${playit_secret} ]]; then
+  echo "Could not read the Playit agent key." >&2
+  exit 1
+fi
+
+playit_api() {
+  local endpoint=$1
+  local payload=$2
+
+  printf 'header = "Authorization: Agent-Key %s"\n' "${playit_secret}" \
+    | curl --config - --fail --silent --show-error \
+      --header 'Content-Type: application/json' \
+      --request POST \
+      --data "${payload}" \
+      "https://api.playit.gg${endpoint}"
+}
+
+tunnels_response=$(playit_api /v1/tunnels/list '{}')
+
+if [[ $(jq -r '.status' <<<"${tunnels_response}") != "success" ]]; then
+  echo "Playit could not list tunnels: ${tunnels_response}" >&2
+  exit 1
+fi
+
+tunnel_id=$(jq -r 'first(.data.tunnels[]? | select(.name == "Encrypto VPN") | .id) // empty' <<<"${tunnels_response}")
+
+if [[ -z ${tunnel_id} ]]; then
+  create_payload='{"ports":{"type":"custom-udp","details":5667},"origin":{"type":"agent","data":{"agent_id":null,"config":{"fields":[{"name":"local_ip","value":"127.0.0.1"},{"name":"local_port","value":"5667"}]}}},"enabled":true,"alloc":null,"name":"Encrypto VPN","firewall_id":null}'
+  create_response=$(playit_api /v1/tunnels/create "${create_payload}")
+
+  if [[ $(jq -r '.status' <<<"${create_response}") != "success" ]]; then
+    echo "Playit could not create the UDP tunnel: ${create_response}" >&2
+    exit 1
+  fi
+
+  tunnel_id=$(jq -r '.data.id' <<<"${create_response}")
+fi
+
+for _ in {1..10}; do
+  rundata_response=$(playit_api /v1/agents/rundata '{}')
+  public_endpoint=$(jq -r --arg tunnel_id "${tunnel_id}" 'first(.data.tunnels[]? | select(.id == $tunnel_id) | .display_address) // empty' <<<"${rundata_response}")
+
+  if [[ -n ${public_endpoint} ]]; then
+    echo "Encrypto VPN public endpoint: ${public_endpoint}"
+    exit 0
+  fi
+
+  sleep 2
+done
+
+echo "The Playit tunnel was created but its public endpoint is still pending."
