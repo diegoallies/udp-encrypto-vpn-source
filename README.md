@@ -1,27 +1,27 @@
 # udp-encrypto-vpn
 
-A hardened ZIVPN UDP server installer for a private Linux host published through a single Playit UDP tunnel.
+A hardened Encrypto VPN UDP server installer for a private Linux host published through a single Playit UDP tunnel.
 
 ```text
-ZIVPN client -> Playit UDP endpoint -> 127.0.0.1:5667 on Linux -> ZIVPN
+Encrypto VPN client -> Playit UDP endpoint -> 127.0.0.1:5667 on Linux -> Encrypto VPN server
 ```
 
 The installer:
 
 - supports x86_64 Linux;
-- verifies the pinned ZIVPN 1.4.9 binary checksum;
+- verifies the pinned upstream ZIVPN 1.4.9 engine checksum;
 - requires a strong password;
-- binds ZIVPN to localhost for Playit forwarding;
+- binds Encrypto VPN to localhost for Playit forwarding;
 - runs the service as a restricted system user;
 - does not upgrade the operating system; and
 - does not open or redirect a broad UDP port range.
 
-## Install ZIVPN
+## Install Encrypto VPN
 
 Review the script, then run:
 
 ```bash
-sudo ./zi.sh
+sudo ./encrypto.sh
 ```
 
 Enter a password containing at least 16 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, or `-`.
@@ -34,16 +34,16 @@ Install the Playit agent using its official Linux instructions, claim the agent,
 127.0.0.1:5667
 ```
 
-Use the public hostname and port assigned by Playit in the ZIVPN client.
+Use the public hostname and port assigned by Playit in the compatible client.
 
 ## Uninstall
 
 ```bash
-sudo ./uninstall.sh
+sudo ./encrypto-uninstall.sh
 ```
 
 ## Trust boundary
 
-The ZIVPN server is a precompiled third-party binary. This repository pins the SHA-256 digest of the inspected release asset, but does not provide or independently audit its source code.
+Encrypto VPN currently uses a precompiled third-party ZIVPN engine. This repository pins the SHA-256 digest of the inspected release asset, but does not provide or independently audit its source code.
 
 Derived from [zahidbd2/udp-zivpn](https://github.com/zahidbd2/udp-zivpn). ZIVPN client: [Google Play](https://play.google.com/store/apps/details?id=com.zi.zivpn).

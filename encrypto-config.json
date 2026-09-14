@@ -1,7 +1,7 @@
 {
   "listen": "127.0.0.1:5667",
-  "cert": "/etc/zivpn/zivpn.crt",
-  "key": "/etc/zivpn/zivpn.key",
+  "cert": "/etc/encrypto-vpn/encrypto-vpn.crt",
+  "key": "/etc/encrypto-vpn/encrypto-vpn.key",
   "obfs": "zivpn",
   "auth": {
     "mode": "passwords",
