@@ -24,7 +24,9 @@ Review the script, then run:
 sudo ./encrypto.sh
 ```
 
-Enter a password containing at least 16 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, or `-`.
+Press Enter to use the default password `masepoes`, or enter a custom password containing at least 16 characters from `A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, or `-`.
+
+The default password is public and insecure. Use a custom password for any reachable tunnel.
 
 ## Connect Playit
 

@@ -22,10 +22,12 @@ if [[ $(uname -m) != "x86_64" ]]; then
   exit 1
 fi
 
-read -r -s -p "Encrypto VPN password (minimum 16 characters): " encrypto_password
+read -r -s -p "Encrypto VPN password [masepoes]: " encrypto_password
 echo
 
-if [[ ${#encrypto_password} -lt 16 || ! ${encrypto_password} =~ ^[A-Za-z0-9._~-]+$ ]]; then
+if [[ -z ${encrypto_password} ]]; then
+  encrypto_password="masepoes"
+elif [[ ${#encrypto_password} -lt 16 || ! ${encrypto_password} =~ ^[A-Za-z0-9._~-]+$ ]]; then
   echo "Use at least 16 characters from: A-Z a-z 0-9 . _ ~ -" >&2
   exit 1
 fi
