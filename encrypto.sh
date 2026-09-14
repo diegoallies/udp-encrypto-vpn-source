@@ -223,3 +223,9 @@ show_playit_step 3 'Port count: 1'
 show_playit_step 4 'Acknowledge that Roblox is prohibited, then click Next.'
 show_playit_step 5 'Software description: Self-hosted Encrypto VPN server for accessing my own network'
 show_playit_step 6 'Manually type this usage confirmation because Playit blocks pasting: I will not use this tunnel for malware, abuse, or prohibited software.'
+show_playit_step 7 'Public Endpoint: keep Free Network selected, then click Next.'
+show_playit_step 8 'Assign to Agent: select the agent created when you approved the Playit claim. Its name may begin with from-key-. You can rename it later.'
+show_playit_step 9 'Origin Config: Local IP = 127.0.0.1, Local Port = 5667, Proxy Protocol = None. Then click Next.'
+show_playit_step 10 'Review every value, then click Create Tunnel.'
+echo
+echo "[done] Complete the final browser action and copy the public endpoint Playit assigns."
