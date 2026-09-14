@@ -10,10 +10,11 @@ Encrypto VPN client -> Playit UDP endpoint -> 127.0.0.1:5667 on Linux -> Encrypt
 
 The installer:
 
-- supports x86_64 Linux;
+- supports x86_64 Debian-based Linux, including Kali;
 - verifies the pinned upstream server engine checksum;
 - requires a strong password;
 - binds Encrypto VPN to localhost for Playit forwarding;
+- installs and starts the Playit agent;
 - runs the service as a restricted system user;
 - does not upgrade the operating system; and
 - does not open or redirect a broad UDP port range.
@@ -32,7 +33,7 @@ The default password is public and insecure. Use a custom password for any reach
 
 ## Connect Playit
 
-Install the Playit agent using its official Linux instructions, claim the agent, and create one custom UDP tunnel with this local address:
+The installer runs `playit setup`. Open the claim URL it prints, approve the Kali agent in your Playit account, and create one custom UDP tunnel with this local address:
 
 ```text
 127.0.0.1:5667

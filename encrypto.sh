@@ -10,7 +10,7 @@ if [[ ${EUID} -ne 0 ]]; then
   exit 1
 fi
 
-for command in curl openssl sha256sum systemctl useradd install; do
+for command in apt-get curl gpg openssl sha256sum systemctl useradd install; do
   if ! command -v "${command}" >/dev/null 2>&1; then
     echo "Missing required command: ${command}" >&2
     exit 1
@@ -108,5 +108,19 @@ systemctl daemon-reload
 systemctl enable --now encrypto-vpn.service
 systemctl --no-pager --full status encrypto-vpn.service
 
+if ! command -v playit >/dev/null 2>&1; then
+  curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+    https://playit-cloud.github.io/ppa/key.gpg \
+    | gpg --dearmor --batch --yes --output /etc/apt/trusted.gpg.d/playit.gpg
+  echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./" \
+    > /etc/apt/sources.list.d/playit-cloud.list
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y playit
+fi
+
+systemctl enable --now playit
+
 echo "Encrypto VPN is listening locally on UDP 127.0.0.1:5667."
-echo "Create a Playit custom UDP tunnel whose local address is 127.0.0.1:5667."
+echo "Playit will print a claim URL. Open it in your browser and approve this agent."
+playit setup
+echo "Create a Playit custom UDP tunnel pointing to 127.0.0.1:5667."
