@@ -11,6 +11,7 @@ Encrypto VPN client -> Playit UDP endpoint -> 127.0.0.1:5667 on Linux -> Encrypt
 The installer:
 
 - supports x86_64 Debian-based Linux, including Kali;
+- safely resumes when run again and preserves existing credentials;
 - verifies the pinned upstream server engine checksum;
 - requires a strong password;
 - binds Encrypto VPN to localhost for Playit forwarding;
